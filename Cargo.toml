@@ -1,0 +1,21 @@
+[package]
+name = "menagerie"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+authors = ["Gabriele Scannagatti (SpanishInquisition49)"]
+description = "A collection of classic and randomized data structures: treaps with split and join, more to come"
+license = "MIT OR Apache-2.0"
+readme = "README.md"
+repository = "https://github.com/SpanishInquisition49/Menagerie"
+keywords = ["treap", "data-structures", "randomized", "bst", "collections"]
+categories = ["data-structures", "algorithms"]
+
+[dependencies]
+rand = "0.10.3"
+
+[lints.rust]
+# `tests/planned.rs`: one value per planned feature, see the file header.
+unexpected_cfgs = { level = "warn", check-cfg = [
+    'cfg(planned, values("size", "ends", "range", "retain", "std_insert", "join_recovery", "traits", "iterators", "deep", "random_join", "set_ops", "order_stats", "map"))',
+] }

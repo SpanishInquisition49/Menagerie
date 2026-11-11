@@ -1,0 +1,23 @@
+# Build output
+/target/
+
+# Profiling and benchmark artifacts
+perf.data
+perf.data.old
+flamegraph.svg
+*.profraw
+*.profdata
+
+# Editors and IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Local environment
+.env
