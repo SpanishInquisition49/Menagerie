@@ -3,9 +3,11 @@
 use rand::Rng;
 
 use std::borrow::Borrow;
+use std::fmt::{self, Debug};
 
 use super::error::TreapError;
 use super::generic::{self, Treap};
+use super::node::DebugList;
 use super::order::MinHeap;
 
 /// A treap that draws a random `u32` priority for every inserted key.
@@ -32,6 +34,24 @@ use super::order::MinHeap;
 /// ```
 pub struct RandomTreap<T> {
     treap: Treap<T, u32, MinHeap>,
+}
+
+impl<T: Debug> Debug for RandomTreap<T> {
+    /// Format the treap as a set of keys, in increasing order, like a
+    /// `BTreeSet`: the random priorities and the shape are not shown.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use menagerie::treap::RandomTreap;
+    ///
+    /// let treap: RandomTreap<i32> = [3, 1, 2].into_iter().collect();
+    ///
+    /// assert_eq!(format!("{treap:?}"), "{1, 2, 3}");
+    /// ```
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_set().entries(self.iter()).finish()
+    }
 }
 
 impl<T> Default for RandomTreap<T>
@@ -189,6 +209,23 @@ pub struct Iter<'a, T> {
     inner: generic::Iter<'a, T, u32>,
 }
 
+impl<T> Clone for Iter<'_, T> {
+    fn clone(&self) -> Self {
+        Self {
+            inner: self.inner.clone(),
+        }
+    }
+}
+
+impl<T: Debug> Debug for Iter<'_, T> {
+    /// The keys not returned yet, as `Iter([key, ...])`.
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_tuple("Iter")
+            .field(&DebugList(self.clone()))
+            .finish()
+    }
+}
+
 impl<'a, T> Iterator for Iter<'a, T> {
     type Item = &'a T;
 
@@ -204,6 +241,14 @@ impl<'a, T> Iterator for Iter<'a, T> {
 /// consumes the treap.
 pub struct IntoIter<T> {
     inner: generic::IntoIter<T, u32>,
+}
+
+impl<T: Debug> Debug for IntoIter<T> {
+    /// The keys not returned yet, as `IntoIter([key, ...])`.
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let keys = self.inner.remaining().map(|(key, _)| key);
+        f.debug_tuple("IntoIter").field(&DebugList(keys)).finish()
+    }
 }
 
 impl<T> Iterator for IntoIter<T> {

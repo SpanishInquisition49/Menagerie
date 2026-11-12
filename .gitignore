@@ -21,3 +21,6 @@ Thumbs.db
 
 # Local environment
 .env
+
+# Private notes, kept out of git and of the published crate
+/TODO.md

@@ -469,3 +469,73 @@ fn errors_work_with_the_question_mark_operator() {
     }
     assert!(run().is_err());
 }
+
+// ---------------------------------------------------------------------------
+// Debug
+// ---------------------------------------------------------------------------
+
+#[test]
+fn treaps_debug_as_their_contents() {
+    let treap = treap_of(&[(3, 1), (1, 2), (2, 3)]);
+    assert_eq!(format!("{treap:?}"), "{1: 2, 2: 3, 3: 1}");
+
+    let random: RandomTreap<i32> = [3, 1, 2].into_iter().collect();
+    assert_eq!(format!("{random:?}"), "{1, 2, 3}");
+
+    let empty: RandomTreap<i32> = RandomTreap::default();
+    assert_eq!(format!("{empty:?}"), "{}");
+}
+
+#[test]
+fn debug_does_not_require_a_debug_order() {
+    // `MinHeap` and `MaxHeap` are `Debug`, but the treap does not need it.
+    let treap: Treap<&str, u8, MaxHeap> = Treap::with_order(MaxHeap);
+    assert_eq!(format!("{treap:?}"), "{}");
+    assert_eq!(format!("{MinHeap:?} {MaxHeap:?}"), "MinHeap MaxHeap");
+}
+
+#[test]
+fn iterators_debug_what_they_have_left() {
+    let treap = treap_of(&[(3, 1), (1, 2), (2, 3)]);
+    let mut iter = treap.iter();
+    iter.next();
+    assert_eq!(format!("{iter:?}"), "Iter([(2, 3), (3, 1)])");
+    // Printing does not consume the iterator.
+    assert_eq!(iter.count(), 2);
+
+    let mut into_iter = treap.into_iter();
+    into_iter.next();
+    assert_eq!(format!("{into_iter:?}"), "IntoIter([(2, 3), (3, 1)])");
+    assert_eq!(into_iter.count(), 2);
+
+    let random: RandomTreap<i32> = (1..=5).collect();
+    let mut iter = random.iter();
+    iter.next();
+    assert_eq!(format!("{iter:?}"), "Iter([2, 3, 4, 5])");
+
+    let mut into_iter = random.into_iter();
+    into_iter.next();
+    into_iter.next();
+    assert_eq!(format!("{into_iter:?}"), "IntoIter([3, 4, 5])");
+}
+
+#[test]
+fn into_iter_debug_matches_the_remaining_items_at_every_step() {
+    let random: RandomTreap<u32> = (0..200).collect();
+    let mut into_iter = random.into_iter();
+    for next in 0..200 {
+        let expected: Vec<u32> = (next..200).collect();
+        assert_eq!(format!("{into_iter:?}"), format!("IntoIter({expected:?})"));
+        assert_eq!(into_iter.next(), Some(next));
+    }
+    assert_eq!(format!("{into_iter:?}"), "IntoIter([])");
+}
+
+#[test]
+fn by_reference_iterators_can_be_cloned() {
+    let random: RandomTreap<i32> = (1..=4).collect();
+    let mut iter = random.iter();
+    iter.next();
+    let copy = iter.clone();
+    assert!(iter.eq(copy));
+}

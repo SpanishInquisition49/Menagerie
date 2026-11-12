@@ -3,7 +3,8 @@
 use std::fmt::Display;
 
 /// An error returned by a treap operation.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Copy)]
+#[non_exhaustive]
 pub enum TreapError {
     /// The key is already in the treap. Treaps do not store duplicate keys.
     ///

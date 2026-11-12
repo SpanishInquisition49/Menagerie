@@ -15,6 +15,8 @@
 //! assert!(treap.iter().eq(&["a", "c"]));
 //! ```
 
+#![warn(missing_debug_implementations)]
+
 pub mod treap;
 
 pub use treap::{RandomTreap, Treap};
@@ -22,4 +24,5 @@ pub use treap::{RandomTreap, Treap};
 // Compile and run the examples of the README as doctests.
 #[doc = include_str!("../README.md")]
 #[cfg(doctest)]
+#[derive(Debug)]
 pub struct ReadmeDoctests;

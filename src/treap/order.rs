@@ -28,7 +28,7 @@ pub trait Order: Copy + Default {
 /// assert!(MinHeap.is_above(&1, &2));
 /// assert!(!MinHeap.is_above(&2, &2));
 /// ```
-#[derive(Clone, Copy, Default)]
+#[derive(Clone, Copy, Debug, Default)]
 pub struct MinHeap;
 
 impl Order for MinHeap {
@@ -47,7 +47,7 @@ impl Order for MinHeap {
 /// assert!(MaxHeap.is_above(&2, &1));
 /// assert!(!MaxHeap.is_above(&2, &2));
 /// ```
-#[derive(Clone, Copy, Default)]
+#[derive(Clone, Copy, Debug, Default)]
 pub struct MaxHeap;
 
 impl Order for MaxHeap {

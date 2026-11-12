@@ -1,6 +1,7 @@
 //! Generic treap: the caller chooses the key, the priority and the heap order.
 
 use std::borrow::Borrow;
+use std::fmt::{self, Debug};
 
 use super::error::TreapError;
 use super::node::{self, Link, TreapNode};
@@ -31,9 +32,30 @@ use super::order::{MinHeap, Order};
 /// assert_eq!(treap.get("a"), Some(&"a"));
 /// assert!(treap.insert("a", 30).is_err());
 /// ```
+#[derive(Clone)]
 pub struct Treap<T, P, O = MinHeap> {
     root: Link<T, P>,
     order: O,
+}
+
+impl<T: Debug, P: Debug, O> Debug for Treap<T, P, O> {
+    /// Format the treap as a map from keys to priorities, in increasing key
+    /// order, like a `BTreeMap`: the shape of the tree is not shown.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use menagerie::treap::Treap;
+    ///
+    /// let mut treap: Treap<char, u32> = Treap::new();
+    /// treap.insert('b', 1).unwrap();
+    /// treap.insert('a', 2).unwrap();
+    ///
+    /// assert_eq!(format!("{treap:?}"), "{'a': 2, 'b': 1}");
+    /// ```
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_map().entries(self.iter()).finish()
+    }
 }
 
 impl<T, P, O> Default for Treap<T, P, O>
@@ -256,6 +278,21 @@ pub struct Iter<'a, T, P> {
     inner: node::Iter<'a, T, P>,
 }
 
+impl<T, P> Clone for Iter<'_, T, P> {
+    fn clone(&self) -> Self {
+        Self {
+            inner: self.inner.clone(),
+        }
+    }
+}
+
+impl<T: Debug, P: Debug> Debug for Iter<'_, T, P> {
+    /// The pairs not returned yet, as `Iter([(key, priority), ...])`.
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_tuple("Iter").field(&self.inner).finish()
+    }
+}
+
 impl<'a, T, P> Iterator for Iter<'a, T, P> {
     type Item = (&'a T, &'a P);
 
@@ -271,6 +308,20 @@ impl<'a, T, P> Iterator for Iter<'a, T, P> {
 /// consumes the treap.
 pub struct IntoIter<T, P> {
     inner: node::IntoIter<T, P>,
+}
+
+impl<T, P> IntoIter<T, P> {
+    /// The pairs not returned yet, by reference, without consuming them.
+    pub(crate) fn remaining(&self) -> impl Iterator<Item = (&T, &P)> + Clone + '_ {
+        self.inner.remaining()
+    }
+}
+
+impl<T: Debug, P: Debug> Debug for IntoIter<T, P> {
+    /// The pairs not returned yet, as `IntoIter([(key, priority), ...])`.
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_tuple("IntoIter").field(&self.inner).finish()
+    }
 }
 
 impl<T, P> Iterator for IntoIter<T, P> {

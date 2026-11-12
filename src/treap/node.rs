@@ -5,6 +5,8 @@
 //! operation to the functions of [`TreapNode`].
 
 use std::borrow::Borrow;
+use std::fmt::{self, Debug};
+use std::iter;
 use std::mem::{swap, take};
 
 use super::error::TreapError;
@@ -21,6 +23,7 @@ pub(crate) type Link<T, P> = Option<Box<TreapNode<T, P>>>;
 /// order.
 ///
 /// Duplicate keys are not supported.
+#[derive(Clone)]
 pub(crate) struct TreapNode<T, P> {
     key: T,
     /// The priority: the node is above its children in the heap order.
@@ -29,6 +32,21 @@ pub(crate) struct TreapNode<T, P> {
     left: Link<T, P>,
     /// Subtree with the keys greater than `key`.
     right: Link<T, P>,
+}
+
+/// Formats the items of a cloneable iterator as a list, without consuming
+/// it: the `Debug` implementations of the iterators print what they have
+/// left, as the iterators of the standard collections do.
+pub(crate) struct DebugList<I>(pub(crate) I);
+
+impl<I> Debug for DebugList<I>
+where
+    I: Iterator + Clone,
+    I::Item: Debug,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_list().entries(self.0.clone()).finish()
+    }
 }
 
 /// In-order iterator over the keys and priorities of a subtree, by reference.
@@ -58,6 +76,23 @@ impl<'a, T, P> Iter<'a, T, P> {
     }
 }
 
+// Not derived: the derive would require `T: Clone` and `P: Clone`, but
+// cloning only copies the stack of references.
+impl<T, P> Clone for Iter<'_, T, P> {
+    fn clone(&self) -> Self {
+        Self {
+            stack: self.stack.clone(),
+        }
+    }
+}
+
+impl<T: Debug, P: Debug> Debug for Iter<'_, T, P> {
+    /// The pairs not returned yet.
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        DebugList(self.clone()).fmt(f)
+    }
+}
+
 impl<'a, T, P> Iterator for Iter<'a, T, P> {
     type Item = (&'a T, &'a P);
 
@@ -84,6 +119,16 @@ impl<T, P> IntoIter<T, P> {
         iter
     }
 
+    /// The pairs not returned yet, by reference and in order, without
+    /// consuming them: each node on the stack comes before its right subtree,
+    /// and the stack is popped from the end.
+    pub(crate) fn remaining(&self) -> impl Iterator<Item = (&T, &P)> + Clone + '_ {
+        self.stack
+            .iter()
+            .rev()
+            .flat_map(|node| iter::once((&node.key, &node.priority)).chain(Iter::new(&node.right)))
+    }
+
     /// Push `link` and all its left descendants, detaching each from its
     /// parent so that the stack owns it.
     fn push_left_spine(&mut self, mut link: Link<T, P>) {
@@ -91,6 +136,13 @@ impl<T, P> IntoIter<T, P> {
             link = node.left.take();
             self.stack.push(node);
         }
+    }
+}
+
+impl<T: Debug, P: Debug> Debug for IntoIter<T, P> {
+    /// The pairs not returned yet.
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        DebugList(self.remaining()).fmt(f)
     }
 }
 
